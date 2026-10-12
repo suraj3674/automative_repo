@@ -1,0 +1,146 @@
+WITH technical_validation AS (
+
+    SELECT
+        DEALER_ID,
+        DEALER_NAME,
+        CITY,
+        STATE,
+        REGION,
+        UPDATED_AT,
+
+        SOURCE_SYSTEM,
+        SOURCE_FILE_NAME,
+        INGESTION_TIMESTAMP,
+        RUN_ID,
+
+        CASE
+            WHEN DEALER_ID IS NULL THEN 'FAILED'
+            WHEN DEALER_NAME IS NULL THEN 'FAILED'
+            WHEN CITY IS NULL THEN 'FAILED'
+            WHEN STATE IS NULL THEN 'FAILED'
+            WHEN UPDATED_AT IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS TECHNICAL_VALIDATION
+
+    FROM {{ source('raw', 'DEALERS') }}
+),
+
+standardized AS (
+
+    SELECT
+        NULLIF(TRIM(DEALER_ID), '') AS DEALER_ID,
+        NULLIF(TRIM(DEALER_NAME), '') AS DEALER_NAME,
+        NULLIF(TRIM(CITY), '') AS CITY,
+        UPPER(TRIM(STATE)) AS STATE,
+        UPPER(TRIM(REGION)) AS REGION,
+        UPDATED_AT,
+
+        SOURCE_SYSTEM,
+        SOURCE_FILE_NAME,
+        INGESTION_TIMESTAMP,
+        RUN_ID,
+
+        TECHNICAL_VALIDATION
+
+    FROM technical_validation
+),
+
+dq_validation AS (
+
+    SELECT
+        *,
+
+        CASE
+            WHEN DEALER_ID IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS DEALER_ID_VALIDATION,
+
+        CASE
+            WHEN DEALER_NAME IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS DEALER_NAME_VALIDATION,
+
+        CASE
+            WHEN CITY IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS CITY_VALIDATION,
+
+        CASE
+            WHEN STATE IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS STATE_VALIDATION,
+
+        CASE
+            WHEN REGION IN (
+                'NORTH',
+                'SOUTH',
+                'EAST',
+                'WEST',
+                'CENTRAL'
+            )
+            THEN 'PASSED'
+            ELSE 'FAILED'
+        END AS REGION_VALIDATION
+
+    FROM standardized
+)
+
+SELECT
+    *,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+          OR DEALER_ID_VALIDATION = 'FAILED'
+          OR DEALER_NAME_VALIDATION = 'FAILED'
+          OR CITY_VALIDATION = 'FAILED'
+          OR STATE_VALIDATION = 'FAILED'
+          OR REGION_VALIDATION = 'FAILED'
+        THEN 'INVALID'
+        ELSE 'VALID'
+    END AS RECORD_STATUS,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+            THEN 'TECHNICAL_VALIDATION_FAILED'
+
+        WHEN DEALER_ID_VALIDATION = 'FAILED'
+            THEN 'DEALER_ID_MISSING'
+
+        WHEN DEALER_NAME_VALIDATION = 'FAILED'
+            THEN 'DEALER_NAME_MISSING'
+
+        WHEN CITY_VALIDATION = 'FAILED'
+            THEN 'CITY_MISSING'
+
+        WHEN STATE_VALIDATION = 'FAILED'
+            THEN 'STATE_MISSING'
+
+        WHEN REGION_VALIDATION = 'FAILED'
+            THEN 'INVALID_REGION'
+
+        ELSE NULL
+    END AS ERROR_REASON,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+            THEN 'TECHNICAL_FIELD_CHECK'
+
+        WHEN DEALER_ID_VALIDATION = 'FAILED'
+            THEN 'DEALER_ID_MANDATORY_CHECK'
+
+        WHEN DEALER_NAME_VALIDATION = 'FAILED'
+            THEN 'DEALER_NAME_MANDATORY_CHECK'
+
+        WHEN CITY_VALIDATION = 'FAILED'
+            THEN 'CITY_MANDATORY_CHECK'
+
+        WHEN STATE_VALIDATION = 'FAILED'
+            THEN 'STATE_MANDATORY_CHECK'
+
+        WHEN REGION_VALIDATION = 'FAILED'
+            THEN 'REGION_DOMAIN_CHECK'
+
+        ELSE NULL
+    END AS VALIDATION_RULE
+
+FROM dq_validation

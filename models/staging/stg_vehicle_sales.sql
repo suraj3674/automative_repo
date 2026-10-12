@@ -1,0 +1,125 @@
+WITH technical_validation AS (
+
+    SELECT
+        SALE_ID,
+        VIN,
+        DEALER_ID,
+        SALE_DATE,
+        SALE_AMOUNT,
+        CURRENCY,
+        SALES_CHANNEL,
+        STATUS,
+        UPDATED_AT,
+
+        SOURCE_SYSTEM,
+        SOURCE_FILE_NAME,
+        INGESTION_TIMESTAMP,
+        RUN_ID,
+
+        CASE
+            WHEN SALE_ID IS NULL THEN 'FAILED'
+            WHEN TRY_TO_DATE(SALE_DATE) IS NULL THEN 'FAILED'
+            WHEN TRY_TO_DECIMAL(SALE_AMOUNT, 18, 2) IS NULL THEN 'FAILED'
+            WHEN UPDATED_AT IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS TECHNICAL_VALIDATION
+
+    FROM {{ source('raw', 'VEHICLE_SALES') }}
+),
+
+standardized AS (
+
+    SELECT
+        TRIM(SALE_ID) AS SALE_ID,
+        NULLIF(TRIM(VIN), '') AS VIN,
+        TRIM(DEALER_ID) AS DEALER_ID,
+
+        TRY_TO_DATE(SALE_DATE) AS SALE_DATE,
+        TRY_TO_DECIMAL(SALE_AMOUNT, 18, 2) AS SALE_AMOUNT,
+
+        UPPER(TRIM(CURRENCY)) AS CURRENCY,
+        UPPER(TRIM(SALES_CHANNEL)) AS SALES_CHANNEL,
+        UPPER(TRIM(STATUS)) AS STATUS,
+
+        UPDATED_AT AS UPDATED_AT,
+
+        SOURCE_SYSTEM,
+        SOURCE_FILE_NAME,
+        INGESTION_TIMESTAMP,
+        RUN_ID,
+
+        TECHNICAL_VALIDATION
+
+    FROM technical_validation
+),
+
+dq_validation AS (
+
+    SELECT
+        *,
+
+        CASE
+            WHEN VIN IS NULL THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS VIN_VALIDATION,
+
+        CASE
+            WHEN SALE_AMOUNT IS NULL OR SALE_AMOUNT <= 0
+            THEN 'FAILED'
+            ELSE 'PASSED'
+        END AS AMOUNT_VALIDATION,
+
+        CASE
+            WHEN STATUS IN ('COMPLETED', 'PENDING', 'CANCELLED')
+            THEN 'PASSED'
+            ELSE 'FAILED'
+        END AS STATUS_VALIDATION
+
+    FROM standardized
+)
+
+SELECT
+    *,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+          OR VIN_VALIDATION = 'FAILED'
+          OR AMOUNT_VALIDATION = 'FAILED'
+          OR STATUS_VALIDATION = 'FAILED'
+        THEN 'INVALID'
+        ELSE 'VALID'
+    END AS RECORD_STATUS,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+            THEN 'TECHNICAL_VALIDATION_FAILED'
+
+        WHEN VIN_VALIDATION = 'FAILED'
+            THEN 'VIN_MISSING'
+
+        WHEN AMOUNT_VALIDATION = 'FAILED'
+            THEN 'INVALID_SALE_AMOUNT'
+
+        WHEN STATUS_VALIDATION = 'FAILED'
+            THEN 'INVALID_STATUS'
+
+        ELSE NULL
+    END AS ERROR_REASON,
+
+    CASE
+        WHEN TECHNICAL_VALIDATION = 'FAILED'
+            THEN 'TECHNICAL_FIELD_CHECK'
+
+        WHEN VIN_VALIDATION = 'FAILED'
+            THEN 'VIN_MANDATORY_CHECK'
+
+        WHEN AMOUNT_VALIDATION = 'FAILED'
+            THEN 'SALE_AMOUNT_POSITIVE_CHECK'
+
+        WHEN STATUS_VALIDATION = 'FAILED'
+            THEN 'STATUS_DOMAIN_CHECK'
+
+        ELSE NULL
+    END AS VALIDATION_RULE
+
+FROM dq_validation

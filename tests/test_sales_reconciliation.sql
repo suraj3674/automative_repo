@@ -1,0 +1,33 @@
+WITH fact AS (
+
+    SELECT
+        COUNT(DISTINCT SALE_ID) AS FACT_SALES_COUNT,
+        COALESCE(SUM(SALE_AMOUNT), 0) AS FACT_SALES_AMOUNT
+    FROM {{ ref('fct_vehicle_sales') }}
+
+),
+
+kpi AS (
+
+    SELECT
+        COALESCE(SUM(TOTAL_VEHICLES_SOLD), 0) AS KPI_SALES_COUNT,
+        COALESCE(SUM(TOTAL_SALES_AMOUNT), 0) AS KPI_SALES_AMOUNT
+    FROM {{ ref('kpi_sales') }}
+
+)
+
+SELECT
+    fact.FACT_SALES_COUNT,
+    kpi.KPI_SALES_COUNT,
+    fact.FACT_SALES_AMOUNT,
+    kpi.KPI_SALES_AMOUNT
+
+FROM fact
+CROSS JOIN kpi
+
+WHERE
+       fact.FACT_SALES_COUNT <> kpi.KPI_SALES_COUNT
+    OR ABS(
+        fact.FACT_SALES_AMOUNT
+        - kpi.KPI_SALES_AMOUNT
+    ) > 0.01

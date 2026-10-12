@@ -1,0 +1,38 @@
+{{ config(
+    materialized='table'
+) }}
+
+SELECT
+    f.SALE_DATE,
+    DATE_TRUNC('MONTH', f.SALE_DATE) AS SALES_MONTH,
+
+    f.REGION_SK,
+    COALESCE(r.REGION, 'UNKNOWN') AS REGION_NAME,
+
+    f.CURRENCY,
+
+    COUNT(DISTINCT f.SALE_ID) AS TOTAL_VEHICLES_SOLD,
+
+    SUM(f.SALE_AMOUNT) AS TOTAL_SALES_AMOUNT,
+
+    AVG(f.SALE_AMOUNT) AS AVERAGE_SELLING_PRICE,
+
+    COUNT_IF(
+        f.SALE_CATEGORY = 'HIGH_VALUE'
+    ) AS HIGH_VALUE_SALES,
+
+    COUNT_IF(
+        UPPER(f.STATUS) = 'CANCELLED'
+    ) AS CANCELLED_SALES
+
+FROM {{ ref('fct_vehicle_sales') }} f
+
+LEFT JOIN {{ ref('dim_region') }} r
+    ON f.REGION_SK = r.REGION_SK
+
+GROUP BY
+    f.SALE_DATE,
+    DATE_TRUNC('MONTH', f.SALE_DATE),
+    f.REGION_SK,
+    r.REGION,
+    f.CURRENCY

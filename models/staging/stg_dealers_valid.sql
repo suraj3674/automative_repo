@@ -1,0 +1,16 @@
+SELECT
+    DEALER_ID,
+    DEALER_NAME,
+    CITY,
+    STATE,
+    REGION,
+    UPDATED_AT,
+
+    SOURCE_SYSTEM,
+    SOURCE_FILE_NAME,
+    INGESTION_TIMESTAMP,
+    RUN_ID
+
+FROM {{ ref('stg_dealers') }}
+
+WHERE RECORD_STATUS = 'VALID'

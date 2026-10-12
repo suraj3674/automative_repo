@@ -1,0 +1,19 @@
+SELECT
+    SALE_ID,
+    VIN,
+    DEALER_ID,
+    SALE_DATE,
+    SALE_AMOUNT,
+    CURRENCY,
+    SALES_CHANNEL,
+    STATUS,
+    UPDATED_AT,
+
+    SOURCE_SYSTEM,
+    SOURCE_FILE_NAME,
+    INGESTION_TIMESTAMP,
+    RUN_ID
+
+FROM {{ ref('stg_vehicle_sales') }}
+
+WHERE RECORD_STATUS = 'VALID'

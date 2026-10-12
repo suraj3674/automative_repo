@@ -1,0 +1,51 @@
+{{ config(
+    materialized='table'
+) }}
+
+SELECT
+    f.SALE_DATE,
+    DATE_TRUNC('MONTH', f.SALE_DATE) AS SALES_MONTH,
+
+    f.VEHICLE_SK,
+
+    COALESCE(v.VIN, 'UNKNOWN') AS VIN,
+
+    COALESCE(v.MODEL, 'UNKNOWN') AS MODEL,
+
+    COALESCE(v.MODEL_YEAR, 0) AS MODEL_YEAR,
+
+    COALESCE(v.FUEL_TYPE, 'UNKNOWN') AS FUEL_TYPE,
+
+    COALESCE(v.PLANT_CODE, 'UNKNOWN') AS PLANT_CODE,
+
+    f.CURRENCY,
+
+    COUNT(DISTINCT f.SALE_ID) AS VEHICLES_SOLD,
+
+    SUM(f.SALE_AMOUNT) AS TOTAL_SALES_AMOUNT,
+
+    AVG(f.SALE_AMOUNT) AS AVERAGE_SELLING_PRICE,
+
+    COUNT_IF(
+        f.SALE_CATEGORY = 'HIGH_VALUE'
+    ) AS HIGH_VALUE_SALES,
+
+    COUNT_IF(
+        UPPER(f.STATUS) = 'CANCELLED'
+    ) AS CANCELLED_SALES
+
+FROM {{ ref('fct_vehicle_sales') }} f
+
+LEFT JOIN {{ ref('dim_vehicle') }} v
+    ON f.VEHICLE_SK = v.VEHICLE_SK
+
+GROUP BY
+    f.SALE_DATE,
+    DATE_TRUNC('MONTH', f.SALE_DATE),
+    f.VEHICLE_SK,
+    v.VIN,
+    v.MODEL,
+    v.MODEL_YEAR,
+    v.FUEL_TYPE,
+    v.PLANT_CODE,
+    f.CURRENCY

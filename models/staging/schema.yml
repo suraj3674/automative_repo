@@ -1,0 +1,89 @@
+version: 2
+
+models:
+
+  - name: stg_vehicle_sales
+    description: "Standardized vehicle sales staging model."
+
+    columns:
+      - name: SALE_ID
+        data_tests:
+          - not_null
+
+
+      - name: DEALER_ID
+        data_tests:
+          - not_null
+
+      - name: SALE_DATE
+        data_tests:
+          - not_null
+
+
+  - name: stg_vehicle_sales_valid
+    description: "Vehicle sales records that passed staging validation."
+
+    columns:
+      - name: SALE_ID
+        data_tests:
+          - not_null
+
+      - name: VIN
+        data_tests:
+          - not_null
+
+
+  - name: stg_vehicle_sales_quarantine
+    description: "Vehicle sales records rejected during staging validation."
+
+
+  - name: stg_dealers
+    description: "Standardized dealer staging model."
+
+    columns:
+      - name: DEALER_ID
+        data_tests:
+          - not_null
+
+      - name: DEALER_NAME
+        data_tests:
+          - not_null
+
+
+  - name: stg_dealers_valid
+    description: "Dealer records that passed staging validation."
+
+    columns:
+      - name: DEALER_ID
+        data_tests:
+          - not_null
+
+
+  - name: stg_dealers_quarantine
+    description: "Dealer records rejected during staging validation."
+
+
+  - name: stg_vehicles
+    description: "Standardized vehicle staging model."
+
+    columns:
+      - name: VIN
+        data_tests:
+          - not_null
+
+      - name: MODEL
+        data_tests:
+          - not_null
+
+
+  - name: stg_vehicles_valid
+    description: "Vehicle records that passed staging validation."
+
+    columns:
+      - name: VIN
+        data_tests:
+          - not_null
+
+
+  - name: stg_vehicles_quarantine
+    description: "Vehicle records rejected during staging validation."

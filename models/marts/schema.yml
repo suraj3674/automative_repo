@@ -1,0 +1,208 @@
+version: 2
+
+models:
+
+  # ============================================================
+  # DIM DEALER
+  # ============================================================
+
+  - name: dim_dealer
+    description: "Dealer dimension with SCD Type 2 history."
+
+    columns:
+
+      - name: DEALER_SK
+        description: "Deterministic surrogate key for the dealer dimension."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: DEALER_ID
+        description: "Business key of the dealer."
+        data_tests:
+          - not_null
+
+      - name: DEALER_NAME
+        description: "Dealer name."
+
+      - name: REGION
+        description: "Dealer region."
+
+      - name: EFFECTIVE_FROM
+        data_tests:
+          - not_null
+
+      - name: EFFECTIVE_TO
+        data_tests:
+          - not_null
+
+      - name: CURRENT_FLAG
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+
+
+  # ============================================================
+  # DIM VEHICLE
+  # ============================================================
+
+  - name: dim_vehicle
+    description: "Vehicle dimension with SCD Type 2 history."
+
+    columns:
+
+      - name: VEHICLE_SK
+        description: "Deterministic surrogate key."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: VIN
+        description: "Vehicle identification number."
+        data_tests:
+          - not_null
+
+      - name: MODEL
+        description: "Vehicle model."
+
+      - name: MODEL_YEAR
+        description: "Vehicle model year."
+
+      - name: EFFECTIVE_FROM
+        data_tests:
+          - not_null
+
+      - name: EFFECTIVE_TO
+        data_tests:
+          - not_null
+
+      - name: CURRENT_FLAG
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+
+
+  # ============================================================
+  # DIM MODEL
+  # ============================================================
+
+  - name: dim_model
+    description: "Vehicle model dimension."
+
+    columns:
+
+      - name: MODEL_SK
+        description: "Deterministic surrogate key."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: MODEL
+        data_tests:
+          - not_null
+
+      - name: MODEL_YEAR
+        data_tests:
+          - not_null
+
+
+  # ============================================================
+  # DIM REGION
+  # ============================================================
+
+  - name: dim_region
+    description: "Vehicle sales region dimension."
+
+    columns:
+
+      - name: REGION_SK
+        description: "Deterministic surrogate key."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: REGION
+        data_tests:
+          - not_null
+
+
+  # ============================================================
+  # DIM DATE
+  # ============================================================
+
+  - name: dim_date
+    description: "Calendar/date dimension."
+
+    columns:
+
+      - name: DATE_SK
+        description: "Surrogate date key."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: CALENDAR_DATE
+        description: "Calendar date."
+        data_tests:
+          - not_null
+          - unique
+
+
+  # ============================================================
+  # FACT VEHICLE SALES
+  # ============================================================
+
+  - name: fct_vehicle_sales
+    description: >
+      Vehicle sales fact table containing one record per SALE_ID.
+      Incrementally loaded using MERGE.
+
+    columns:
+
+      - name: SALE_ID
+        description: "Unique business identifier for the sale."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: VEHICLE_SK
+        description: "Foreign key to dim_vehicle."
+        data_tests:
+          - not_null
+
+      - name: DEALER_SK
+        description: "Foreign key to dim_dealer."
+        data_tests:
+          - not_null
+
+      - name: MODEL_SK
+        description: "Foreign key to dim_model."
+        data_tests:
+          - not_null
+
+      - name: REGION_SK
+        description: "Foreign key to dim_region."
+        data_tests:
+          - not_null
+
+      - name: DATE_SK
+        description: "Foreign key to dim_date."
+        data_tests:
+          - not_null
+
+      - name: SALE_DATE
+        description: "Vehicle sale date."
+        data_tests:
+          - not_null
+
+      - name: SALE_AMOUNT
+        description: "Vehicle sale amount."
+
+      - name: UPDATED_AT
+        description: "Source update timestamp."
+        data_tests:
+          - not_null

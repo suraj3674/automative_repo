@@ -1,0 +1,16 @@
+SELECT
+    VIN,
+    MODEL,
+    MODEL_YEAR,
+    FUEL_TYPE,
+    PLANT_CODE,
+    UPDATED_AT,
+
+    SOURCE_SYSTEM,
+    SOURCE_FILE_NAME,
+    INGESTION_TIMESTAMP,
+    RUN_ID
+
+FROM {{ ref('stg_vehicles') }}
+
+WHERE RECORD_STATUS = 'VALID'

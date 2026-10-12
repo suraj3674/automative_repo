@@ -1,0 +1,48 @@
+version: 2
+
+models:
+
+  - name: int_sales_enriched
+    description: >
+      Integrated vehicle sales dataset created by joining validated
+      sales, vehicle, dealer, model and region information.
+
+    columns:
+
+      - name: SALE_ID
+        description: "Business identifier for the vehicle sale."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: VIN
+        description: "Vehicle identification number."
+        data_tests:
+          - not_null
+
+      - name: DEALER_ID
+        description: "Dealer business identifier."
+        data_tests:
+          - not_null
+
+      - name: SALE_DATE
+        description: "Date on which the vehicle was sold."
+        data_tests:
+          - not_null
+
+      - name: SALE_AMOUNT
+        description: "Normalized vehicle sale amount."
+
+      - name: MODEL
+        description: "Vehicle model."
+
+      - name: MODEL_YEAR
+        description: "Vehicle model year."
+
+      - name: REGION
+        description: "Dealer sales region."
+
+      - name: UPDATED_AT
+        description: "Source record update timestamp."
+        data_tests:
+          - not_null
