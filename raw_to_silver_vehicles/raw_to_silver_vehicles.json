@@ -1,0 +1,22 @@
+
+{
+  "name": "raw_to_silver_vehicles",
+  "description": "Transform vehicle sales data from S3 RAW to SILVER using AWS Glue",
+  "role": "arn:aws:iam::281851731265:role/glue-s3fullaccess-role",
+  "command": {
+    "name": "glueetl",
+    "scriptLocation": "s3://aws-glue-assets-281851731265-ap-south-1/scripts/raw_to_silver_vehicles.py",
+    "pythonVersion": "3"
+  },
+  "defaultArguments": {
+    "--job-language": "python",
+    "--enable-metrics": "true",
+    "--enable-continuous-cloudwatch-log": "true",
+    "--job-bookmark-option": "job-bookmark-enable"
+  },
+  "maxRetries": 1,
+  "timeout": 30,
+  "glueVersion": "5.0",
+  "numberOfWorkers": 2,
+  "workerType": "G.1X"
+}
