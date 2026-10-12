@@ -65,4 +65,4 @@ print("Silver output path:", silver_path)
 # 6. Commit bookmark state after successful processing
 job.commit()
 
-print("Glue job and bookmark commit completed.")
+print("Glue job and bookmark commit completed successfully.")
