@@ -1,22 +1,35 @@
-
 {
-  "name": "raw_to_silver_vehicles",
-  "description": "Transform vehicle sales data from S3 RAW to SILVER using AWS Glue",
-  "role": "arn:aws:iam::281851731265:role/glue-s3fullaccess-role",
-  "command": {
-    "name": "glueetl",
-    "scriptLocation": "s3://aws-glue-assets-281851731265-ap-south-1/scripts/raw_to_silver_vehicles.py",
-    "pythonVersion": "3"
+  "name" : "raw_to_silver_vehicles",
+  "jobMode" : "SCRIPT",
+  "description" : "Transform vehicle sales data from S3 RAW to SILVER using AWS Glue",
+  "role" : "arn:aws:iam::281851731265:role/glue-s3fullacess-role",
+  "executionProperty" : {
+    "maxConcurrentRuns" : 1
   },
-  "defaultArguments": {
-    "--job-language": "python",
-    "--enable-metrics": "true",
-    "--enable-continuous-cloudwatch-log": "true",
-    "--job-bookmark-option": "job-bookmark-enable"
+  "command" : {
+    "name" : "glueetl",
+    "scriptLocation" : "s3://aws-glue-assets-281851731265-ap-south-1/scripts/raw_to_silver_vehicles.py",
+    "pythonVersion" : "3"
   },
-  "maxRetries": 1,
-  "timeout": 30,
-  "glueVersion": "5.0",
-  "numberOfWorkers": 2,
-  "workerType": "G.1X"
+  "defaultArguments" : {
+    "--enable-metrics" : "",
+    "--job-bookmark-option" : "job-bookmark-enable",
+    "--enable-job-insights" : "true",
+    "--job-language" : "python",
+    "--conf" : "spark.sql.catalog.glue_catalog.glue.skip-name-validation=true"
+  },
+  "maxRetries" : 1,
+  "allocatedCapacity" : 2,
+  "timeout" : 30,
+  "maxCapacity" : 2.0,
+  "glueVersion" : "5.0",
+  "numberOfWorkers" : 2,
+  "workerType" : "G.1X",
+  "executionClass" : "STANDARD",
+  "sourceControlDetails" : {
+    "provider" : "GITHUB",
+    "repository" : "automative_repo",
+    "branch" : "main",
+    "folder" : "raw_to_silver_vehicles"
+  }
 }
