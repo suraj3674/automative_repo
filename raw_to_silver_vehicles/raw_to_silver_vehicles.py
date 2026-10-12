@@ -2,9 +2,9 @@
 import sys
 
 from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from pyspark.context import SparkContext
 from pyspark.sql import functions as F
 
 # 1. Initialize Glue job
@@ -18,11 +18,11 @@ job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
 # 2. Define S3 paths
-raw_path = "s3://automative-bucket1/API_VEHICLE_SALES/raw/"
-silver_path = "s3://automative-bucket1/API_VEHICLE_SALES/silver/vehicles/"
+raw_path = "s3://automative-bucket1/raw/"
+silver_path = "s3://automative-bucket1/silver/"
 
 try:
-    # 3. Read CSV files using a bookmark-enabled DynamicFrame
+    # 3. Read CSV files using Glue DynamicFrame
     raw_dyf = glueContext.create_dynamic_frame.from_options(
         connection_type="s3",
         connection_options={
@@ -40,7 +40,13 @@ try:
     # 4. Convert to Spark DataFrame
     df = raw_dyf.toDF()
 
-    # Normalize column names by removing whitespace and BOM
+    # Validate that columns were detected
+    if not df.columns:
+        raise ValueError(
+            f"No columns detected. Check that CSV files exist at {raw_path}"
+        )
+
+    # Normalize column names: remove BOM and surrounding whitespace
     for column_name in df.columns:
         cleaned_name = column_name.replace("\ufeff", "").strip()
         if cleaned_name != column_name:
@@ -71,25 +77,29 @@ try:
         raise ValueError(
             f"Missing required columns: {missing_columns}. "
             f"Actual columns: {df.columns}. "
-            "Check the CSV header and Glue CSV parsing options."
+            f"Check CSV headers and the RAW path: {raw_path}"
         )
 
     # 6. Transform production_date and derive production_year
-    df_transformed = df.withColumn(
-        "production_date",
-        F.to_date(
-            F.trim(F.col("production_date").cast("string")),
-            "yyyy-MM-dd"
+    df_transformed = (
+        df
+        .withColumn(
+            "production_date",
+            F.to_date(
+                F.trim(F.col("production_date").cast("string")),
+                "yyyy-MM-dd"
+            )
         )
-    ).withColumn(
-        "production_year",
-        F.year(F.col("production_date"))
+        .withColumn(
+            "production_year",
+            F.year(F.col("production_date"))
+        )
     )
 
-    # 7. Check transformed data
+    print("Transformed data:")
     df_transformed.show(10, truncate=False)
 
-    # 8. Write output to SILVER as Parquet
+    # 7. Write transformed data to SILVER as Parquet
     if record_count > 0:
         (
             df_transformed.write
@@ -103,7 +113,7 @@ try:
 
     print("Silver output path:", silver_path)
 
-    # 9. Commit bookmark state only after successful processing
+    # 8. Commit bookmark state only after successful processing
     job.commit()
     print("Glue job and bookmark commit completed.")
 

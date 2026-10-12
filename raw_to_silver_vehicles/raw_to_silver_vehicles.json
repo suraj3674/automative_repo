@@ -13,10 +13,11 @@
   },
   "defaultArguments" : {
     "--enable-metrics" : "",
+    "--enable-spark-ui" : "true",
     "--job-bookmark-option" : "job-bookmark-enable",
     "--enable-job-insights" : "true",
     "--job-language" : "python",
-    "--conf" : "spark.sql.catalog.glue_catalog.glue.skip-name-validation=true"
+    "--conf" : "spark.sql.catalog.glue_catalog.glue.skip-name-validation=true --conf spark.eventLog.rolling.enabled=true"
   },
   "maxRetries" : 1,
   "allocatedCapacity" : 2,
